@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administración | GIF</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main>
+    <h1>GIF</h1>
+    <h2>Panel de administración</h2>
+
+    <p id="mensaje">Comprobando permisos...</p>
+
+    <form id="editor" hidden>
+      <input
+        id="titulo"
+        type="text"
+        placeholder="Título del artículo"
+        required
+      >
+
+      <textarea
+        id="contenido"
+        placeholder="Escribe aquí tu artículo..."
+        rows="12"
+        required
+      ></textarea>
+
+      <button type="button" id="borrador">
+        Guardar borrador
+      </button>
+
+      <button type="button" id="publicar">
+        Publicar artículo
+      </button>
+    </form>
+
+    <p><a href="/">Volver a GIF</a></p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const cliente = supabase.createClient(
+      "https://cldweafkjdjsqliymhtp.supabase.co",
+      "sb_publishable_cAro2nAAzZEUALPkvKTjow_V5UKoGMK"
+    );
+
+    const mensaje = document.getElementById("mensaje");
+    const editor = document.getElementById("editor");
+
+    let usuarioActual = null;
+
+    async function comprobarAdministrador() {
+      const { data: usuarioData, error: usuarioError } =
+        await cliente.auth.getUser();
+
+      if (usuarioError || !usuarioData.user) {
+        mensaje.textContent = "Debes iniciar sesión.";
+        return;
+      }
+
+      const { data: esAdmin, error } =
+        await cliente.rpc("is_admin");
+
+      if (error) {
+        mensaje.textContent =
+          "Error al comprobar permisos: " + error.message;
+        return;
+      }
+
+      if (!esAdmin) {
+        mensaje.textContent =
+          "No tienes permisos de administrador.";
+        return;
+      }
+
+      usuarioActual = usuarioData.user;
+
+      mensaje.textContent =
+        "Administrador: " + usuarioActual.email;
+
+      editor.hidden = false;
+    }
+
+    async function guardarArticulo(estado) {
+      if (!usuarioActual) return;
+
+      const titulo =
+        document.getElementById("titulo").value.trim();
+
+      const contenido =
+        document.getElementById("contenido").value.trim();
+
+      if (!titulo || !contenido) {
+        mensaje.textContent =
+          "Debes escribir un título y un contenido.";
+        return;
+      }
+
+      mensaje.textContent = "Guardando artículo...";
+
+      const { error } = await cliente
+        .from("articles")
+        .insert({
+          title: titulo,
+          content: contenido,
+          author_id: usuarioActual.id,
+          status: estado
+        });
+
+      if (error) {
+        mensaje.textContent = "Error: " + error.message;
+      } else {
+        mensaje.textContent =
+          estado === "published"
+            ? "Artículo publicado correctamente."
+            : "Borrador guardado correctamente.";
+
+        editor.reset();
+      }
+    }
+
+    document.getElementById("borrador")
+      .addEventListener("click", () => {
+        guardarArticulo("draft");
+      });
+
+    document.getElementById("publicar")
+      .addEventListener("click", () => {
+        guardarArticulo("published");
+      });
+
+    comprobarAdministrador();
+  </script>
+
+</body>
+</html>
