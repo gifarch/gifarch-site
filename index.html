@@ -16,20 +16,21 @@
     <div id="usuario">
       Comprobando sesión...
     </div>
+
+    <section>
+      <h2>Últimas publicaciones</h2>
+      <div id="publicaciones">
+        Cargando publicaciones...
+      </div>
+    </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
-    const SUPABASE_URL =
-      "https://cldweafkjdjsqliymhtp.supabase.co";
-
-    const SUPABASE_KEY =
-      "sb_publishable_cAro2nAAzZEUALPkvKTjow_V5UKoGMK";
-
     const cliente = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
+      "https://cldweafkjdjsqliymhtp.supabase.co",
+      "sb_publishable_cAro2nAAzZEUALPkvKTjow_V5UKoGMK"
     );
 
     const contenedor = document.getElementById("usuario");
@@ -43,12 +44,11 @@
           <a href="/registro">Registrarse</a>
         `;
       } else {
-        const usuario = data.user;
-
         contenedor.replaceChildren();
 
         const saludo = document.createElement("p");
-        saludo.textContent = "Conectado como: " + usuario.email;
+        saludo.textContent =
+          "Conectado como: " + data.user.email;
 
         const boton = document.createElement("button");
         boton.textContent = "Cerrar sesión";
@@ -62,14 +62,54 @@
       const { error } = await cliente.auth.signOut();
 
       if (error) {
-        alert("No se pudo cerrar sesión: " + error.message);
+        alert("Error: " + error.message);
         return;
       }
 
       await comprobarSesion();
     }
 
+    async function cargarPublicaciones() {
+      const contenedor =
+        document.getElementById("publicaciones");
+
+      const { data, error } = await cliente
+        .from("articles")
+        .select("id, title, created_at")
+        .eq("status", "published")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        contenedor.textContent =
+          "Error al cargar publicaciones: " + error.message;
+        return;
+      }
+
+      contenedor.replaceChildren();
+
+      if (data.length === 0) {
+        contenedor.textContent =
+          "Todavía no hay publicaciones.";
+        return;
+      }
+
+      for (const articulo of data) {
+        const enlace = document.createElement("a");
+
+        enlace.href =
+          "/articulo?id=" + encodeURIComponent(articulo.id);
+
+        enlace.textContent = articulo.title;
+
+        const bloque = document.createElement("p");
+        bloque.appendChild(enlace);
+
+        contenedor.appendChild(bloque);
+      }
+    }
+
     comprobarSesion();
+    cargarPublicaciones();
   </script>
 
 </body>
