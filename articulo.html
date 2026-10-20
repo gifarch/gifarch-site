@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publicación | GIF</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main>
+    <h1>GIF</h1>
+
+    <article>
+      <h2 id="titulo">Cargando artículo...</h2>
+      <p id="fecha"></p>
+      <div id="contenido"></div>
+    </article>
+
+    <p id="mensaje"></p>
+
+    <a href="/">Volver a GIF</a>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const cliente = supabase.createClient(
+      "https://cldweafkjdjsqliymhtp.supabase.co",
+      "sb_publishable_cAro2nAAzZEUALPkvKTjow_V5UKoGMK"
+    );
+
+    async function cargarArticulo() {
+      const parametros =
+        new URLSearchParams(window.location.search);
+
+      const id = parametros.get("id");
+
+      const titulo = document.getElementById("titulo");
+      const contenido = document.getElementById("contenido");
+      const fecha = document.getElementById("fecha");
+      const mensaje = document.getElementById("mensaje");
+
+      if (!id) {
+        titulo.textContent = "Artículo no encontrado";
+        return;
+      }
+
+      const { data, error } = await cliente
+        .from("articles")
+        .select("title, content, created_at")
+        .eq("id", id)
+        .eq("status", "published")
+        .maybeSingle();
+
+      if (error) {
+        titulo.textContent = "Error";
+        mensaje.textContent = error.message;
+        return;
+      }
+
+      if (!data) {
+        titulo.textContent = "Artículo no encontrado";
+        return;
+      }
+
+      titulo.textContent = data.title;
+
+      contenido.textContent = data.content;
+      contenido.style.whiteSpace = "pre-wrap";
+
+      fecha.textContent = new Date(
+        data.created_at
+      ).toLocaleDateString("es-ES");
+
+      document.title = data.title + " | GIF";
+    }
+
+    cargarArticulo();
+  </script>
+
+</body>
+</html>
