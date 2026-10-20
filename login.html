@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión | GIF</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main>
+    <h1>GIF</h1>
+    <h2>Iniciar sesión</h2>
+
+    <form id="login">
+      <input
+        type="email"
+        id="email"
+        placeholder="Correo electrónico"
+        autocomplete="email"
+        required
+      >
+
+      <input
+        type="password"
+        id="password"
+        placeholder="Contraseña"
+        autocomplete="current-password"
+        required
+      >
+
+      <button type="submit">Entrar</button>
+    </form>
+
+    <p id="mensaje" role="status"></p>
+    <p>¿No tienes cuenta? <a href="/registro">Regístrate</a></p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    const SUPABASE_URL =
+      "https://cldweafkjdjsqliymhtp.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_cAro2nAAzZEUALPkvKTjow_V5UKoGMK";
+
+    const cliente = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+    const formulario = document.getElementById("login");
+    const mensaje = document.getElementById("mensaje");
+
+    formulario.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      mensaje.textContent = "Iniciando sesión...";
+
+      const { data, error } =
+        await cliente.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+      if (error) {
+        mensaje.textContent =
+          "No se pudo iniciar sesión: " + error.message;
+      } else {
+        mensaje.textContent = "Sesión iniciada correctamente.";
+
+        window.location.href = "/";
+      }
+    });
+  </script>
+
+</body>
+</html>
